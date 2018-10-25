@@ -1,3 +1,4 @@
+import java.util.LinkedList;
 import java.util.List;
 
 public class TermPosting {
@@ -10,6 +11,7 @@ public class TermPosting {
         this.term = term;
         this.df = df;
         this.tf = tf;
+        this.postingList = new LinkedList<>();
     }
 
     public TermPosting(String term, int df, int tf, List<DocumentPosting> postingList) {
