@@ -29,7 +29,17 @@ public class DocumentPosting {
         this.maxTf = maxTf;
     }
 
-    public void setDocLen(int docLen) {
+    public void setDocLen(int docLen)
+    {
         this.docLen = docLen;
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentPosting{" +
+                "docId=" + docId +
+                ", maxTf=" + maxTf +
+                ", docLen=" + docLen +
+                '}';
     }
 }
