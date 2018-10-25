@@ -1,9 +1,10 @@
-import StanfordNLP.NLP;
+import DataModels.DocumentPosting;
+import DataModels.TermPosting;
+import IRUtilies.NLP;
 import TestNLPPackage.TermDFTF;
 import edu.stanford.nlp.ling.CoreLabel;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,6 +27,10 @@ public class Indexing {
     private static Map<Integer, DocumentPosting> docStemmaPosting = new HashMap<>();
     private static NLP nlp = new NLP();
 
+    //uncompressed
+    private static Map<String, TermPosting> dictionaryLemma = new TreeMap<>();
+    private static Map<String, TermPosting> dictionaryStemma = new TreeMap<>();
+
     public static void printTFDictionary(Map<String, TermDFTF> doc) {
         System.out.println("Doc Data : " );
         for (String docId : doc.keySet()) {
@@ -40,12 +45,6 @@ public class Indexing {
         }
     }
 
-    public static void printAll(Map<String, TreeSet<Integer>> dict, Map<String, TermDFTF> doc) {
-        for (String key : dict.keySet()) {
-            System.out.println(" Term " + key  + doc.get(key) + " " + Arrays.toString(dict.get(key).toArray()));
-        }
-    }
-
     public static void printMap(Map<String, TreeSet<Integer>> dict) {
         System.out.println("Dictionary Keys  : " + dict.size());
         for (String data: dict.keySet()) {
@@ -53,6 +52,44 @@ public class Indexing {
         }
     }
 
+    public static void printAll(Map<String, TreeSet<Integer>> dict,  //Integer posting list
+                                Map<String, TermDFTF> doc,  //term data
+                                Map<Integer, DocumentPosting> docPosting, //doc metadata
+                                Map<String, TermPosting> dictionary //output
+    )
+    {
+        System.out.println("_________________________________________________________________________");
+        for (String key : dict.keySet()) {
+            TermDFTF term = doc.get(key);
+            TreeSet<Integer> postingList = dict.get(key);
+            List<DocumentPosting> docList = new LinkedList<>();
+            for (Integer docId : postingList) {
+                docList.add(docPosting.get(docId));
+            }
+            TermPosting data = new TermPosting(key, term.getDf(), term.getTf(), docList);
+//            System.out.println(data);
+            dictionary.put(key, data);
+        }
+    }
+
+    public static void updateDictionaries(int docLen, int docId, Map<String, Integer> dict,
+                                   Map<String, TreeSet<Integer>> postingDict,
+                                   Map<String, TermDFTF> termDFTFDict,
+                                   Map<Integer, DocumentPosting> docPosting) {
+        int maxTf = 0;
+        for (String key: dict.keySet()) {
+            if (maxTf < dict.get(key)) {
+                maxTf = dict.get(key);
+            }
+            TreeSet<Integer> getValue = postingDict.getOrDefault(key, new TreeSet<>());
+            getValue.add(docId);
+            postingDict.put(key, getValue);
+
+            TermDFTF dftf = termDFTFDict.getOrDefault(key, new TermDFTF(0,0));
+            termDFTFDict.put(key, new TermDFTF(dftf.getDf() + 1, dftf.getTf() + dict.get(key)));
+        }
+        docPosting.put(docId, new DocumentPosting(docId, maxTf, docLen));
+    }
 
     public static void getLemmaStemmaForDoc(String data, Integer docId) {
 
@@ -60,9 +97,6 @@ public class Indexing {
         nlp.annotateData(data);
         Map<String, Integer> lemmas = new HashMap<>();
         Map<String, Integer> stemmas = new HashMap<>();
-        int maxLemmaTf = 0;
-        int maxStemmaTf = 0;
-
         for (CoreLabel token : nlp.getCoreLabels()) {
             String stemm = nlp.getStemma(token.originalText());
             if (!stopWords.contains(stemm) && !punctuations.contains(token.originalText())) {
@@ -70,35 +104,9 @@ public class Indexing {
                 stemmas.put(stemm, stemmas.getOrDefault(stemm, 0) + 1);
             }
         }
-
-
         int docLen = nlp.getCoreLabels().size();
-        for (String key: lemmas.keySet()) {
-            if (maxLemmaTf < lemmas.get(key)) {
-                maxLemmaTf = lemmas.get(key);
-            }
-            TreeSet<Integer> getValue = lemmaDict.getOrDefault(key, new TreeSet<>());
-            getValue.add(docId);
-            lemmaDict.put(key, getValue);
-
-            TermDFTF dftf = lemmaTFDict.getOrDefault(key, new TermDFTF(0,0));
-            lemmaTFDict.put(key, new TermDFTF(dftf.getDf() + 1, dftf.getTf() + lemmas.get(key)));
-        }
-        docLemmaPosting.put(docId, new DocumentPosting(docId, maxLemmaTf, docLen));
-
-        for (String key: stemmas.keySet()) {
-            if (maxStemmaTf < stemmas.get(key)) {
-                maxStemmaTf = stemmas.get(key);
-            }
-            TreeSet<Integer> getValue = stemmaDict.getOrDefault(key, new TreeSet<>());
-            getValue.add(docId);
-            stemmaDict.put(key, getValue);
-
-            TermDFTF dftf = stemmaTFDict.getOrDefault(key, new TermDFTF(0,0));
-            stemmaTFDict.put(key, new TermDFTF(dftf.getDf() + 1, dftf.getTf() + stemmas.get(key)));
-        }
-        docStemmaPosting.put(docId, new DocumentPosting(docId, maxStemmaTf, docLen));
-
+        updateDictionaries(docLen, docId, lemmas, lemmaDict,lemmaTFDict, docLemmaPosting);
+        updateDictionaries(docLen, docId, stemmas, stemmaDict, stemmaTFDict, docStemmaPosting);
     }
     /**
      * Read file
@@ -154,6 +162,61 @@ public class Indexing {
         punctuations.addAll(Arrays.asList(punctuation));
     }
 
+    public static void serializationOfDictionary(Map<String, TermPosting> dict) {
+        // Serialization
+        System.out.println("serializing obejct count : " + dict.size());
+        try
+        {
+            //Saving of object in a file
+            FileOutputStream file = new FileOutputStream("/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedLemma");
+            ObjectOutputStream out = new ObjectOutputStream(file);
+
+            // Method for serialization of object
+            out.writeObject(dict);
+            out.close();
+            file.close();
+            System.out.println("Object has been serialized");
+
+        }
+
+        catch(IOException ex)
+        {
+            System.out.println("IOException is caught");
+        }
+    }
+
+    public static void deSerializationOfDictionary() {
+        Map<String, TermPosting> dictionary = null;
+        // Deserialization
+        try
+        {
+            // Reading the object from a file
+            FileInputStream file = new FileInputStream("/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedLemma");
+            ObjectInputStream in = new ObjectInputStream(file);
+
+            // Method for deserialization of object
+            dictionary = (Map<String, TermPosting>)in.readObject();
+
+            in.close();
+            file.close();
+
+            System.out.println("Object has been deserialized ");
+        }
+        catch(IOException ex)
+        {
+            System.out.println("IOException is caught");
+        }
+        catch(ClassNotFoundException ex)
+        {
+            System.out.println("ClassNotFoundException is caught");
+        }
+
+//        for (String key : dictionary.keySet()) {
+//            System.out.println(dictionary.get(key));
+//        }
+        System.out.println("deserialized object count : " + dictionary.size());
+    }
+
     public static void main(String args[]) throws Exception{
 
         if (args.length < 2) {
@@ -164,10 +227,30 @@ public class Indexing {
         loadStopWords(args[1]);
         loadPunctuations();
         long start = System.currentTimeMillis();
-//        Indexing indexing = new Indexing(args[1]);
         processFilesFromFolder(new File(args[0]), args[0] + '/');
+        printAll(stemmaDict, stemmaTFDict, docStemmaPosting, dictionaryStemma);
+        printAll(lemmaDict, lemmaTFDict, docLemmaPosting, dictionaryLemma);
         long end = System.currentTimeMillis();
-        printAll(stemmaDict, stemmaTFDict);
         System.out.println("time taken :" + (end - start));
+
+        start = System.currentTimeMillis();
+        //Serialize and write to file
+        serializationOfDictionary(dictionaryStemma);
+        end = System.currentTimeMillis();
+        System.out.println("time taken to serialize :" + (end - start));
+
+        start = System.currentTimeMillis();
+        //deserialize and read from file and reconstruct
+        System.out.println("Printing Result ");
+        deSerializationOfDictionary();
+        end = System.currentTimeMillis();
+        System.out.println("time taken to deserialize :" + (end - start));
+
+        //Compression
+        //lemma blocked compression where k = 8 for dictionary and posting list gamma coding
+
+        //Compression
+        //stemma front coding for dictionary and posting list delta coding
+
     }
 }

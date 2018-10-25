@@ -1,4 +1,8 @@
-public class DocumentPosting {
+package DataModels;
+
+import java.io.Serializable;
+
+public class DocumentPosting implements Serializable {
     int docId;
     int maxTf; //frequencey of most frequent term or stem in that document
     int docLen; //total number of word occurrences in that document
@@ -36,10 +40,8 @@ public class DocumentPosting {
 
     @Override
     public String toString() {
-        return "DocumentPosting{" +
-                "docId=" + docId +
-                ", maxTf=" + maxTf +
-                ", docLen=" + docLen +
-                '}';
+        return "{ docId : " + docId +
+                ", maxTf : " + maxTf +
+                ", docLen : " + docLen + "}";
     }
 }

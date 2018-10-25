@@ -1,4 +1,4 @@
-package StanfordNLP;
+package IRUtilies;
 
 import IRUtilies.Porter;
 import edu.stanford.nlp.ling.CoreAnnotations;

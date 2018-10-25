@@ -1,7 +1,10 @@
+package DataModels;
+
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TermPosting {
+public class TermPosting implements Serializable {
     String term;
     int df; //number of documents this term occurred
     int tf; //number of times that term occur in eachof the document
@@ -49,7 +52,39 @@ public class TermPosting {
         this.tf = tf;
     }
 
-    public void setPostingList(List<DocumentPosting> postingList) {
+    public void setPostingList(List<DocumentPosting> postingList)
+    {
         this.postingList = postingList;
+    }
+
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o != null) {
+//            if (getClass() == o.getClass()) {
+//                TermPosting that = (TermPosting) o;
+//                return df == that.df &&
+//                        tf == that.tf &&
+//                        Objects.equals(term, that.term) &&
+//                        Objects.equals(postingList, that.postingList);
+//            }
+//            else if (o.getClass() == term.getClass()) {
+//                return o.equals(term);
+//            }
+//        }
+//        return false;
+//    }
+
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(term);
+//    }
+
+    @Override
+    public String toString() {
+        return "term : '" + term + '\'' +
+                ", df : " + df +
+                ", tf : " + tf +
+                ", postingList : " + postingList;
     }
 }
