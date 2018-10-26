@@ -1,3 +1,6 @@
+import Compressions.BlockedCompression;
+import DataModels.BlockedCompressionObject;
+import DataModels.BlockedCompressionObjectInt;
 import DataModels.DocumentPosting;
 import DataModels.TermPosting;
 import IRUtilies.NLP;
@@ -31,6 +34,9 @@ public class Indexing {
     private static Map<String, TermPosting> dictionaryLemma = new TreeMap<>();
     private static Map<String, TermPosting> dictionaryStemma = new TreeMap<>();
 
+    //compressed
+    private static Map<String, BlockedCompressionObject> blockCompressed = new HashMap<>();
+
     public static void printTFDictionary(Map<String, TermDFTF> doc) {
         System.out.println("Doc Data : " );
         for (String docId : doc.keySet()) {
@@ -58,7 +64,6 @@ public class Indexing {
                                 Map<String, TermPosting> dictionary //output
     )
     {
-        System.out.println("_________________________________________________________________________");
         for (String key : dict.keySet()) {
             TermDFTF term = doc.get(key);
             TreeSet<Integer> postingList = dict.get(key);
@@ -66,10 +71,11 @@ public class Indexing {
             for (Integer docId : postingList) {
                 docList.add(docPosting.get(docId));
             }
-            TermPosting data = new TermPosting(key, term.getDf(), term.getTf(), docList);
-//            System.out.println(data);
+            TermPosting data = new TermPosting(term.getDf(), term.getTf(), docList);
             dictionary.put(key, data);
         }
+        //create compressed object
+
     }
 
     public static void updateDictionaries(int docLen, int docId, Map<String, Integer> dict,
@@ -108,6 +114,7 @@ public class Indexing {
         updateDictionaries(docLen, docId, lemmas, lemmaDict,lemmaTFDict, docLemmaPosting);
         updateDictionaries(docLen, docId, stemmas, stemmaDict, stemmaTFDict, docStemmaPosting);
     }
+
     /**
      * Read file
      * Read each line
@@ -136,8 +143,6 @@ public class Indexing {
         }
         xml = xml.replaceAll(Indexing.PATTERN, "");
         xml = xml.replaceAll(Indexing.NUMBER_PATTERN, "");
-//        xml = xml.replaceAll("\\p{Punct}", "");
-//        System.out.println(xml);
         getLemmaStemmaForDoc(xml, docId);
     }
 
@@ -162,13 +167,13 @@ public class Indexing {
         punctuations.addAll(Arrays.asList(punctuation));
     }
 
-    public static void serializationOfDictionary(Map<String, TermPosting> dict) {
+    public static void serializationOfDictionary(Map<String, TermPosting> dict, String filename) {
         // Serialization
-        System.out.println("serializing obejct count : " + dict.size());
+        System.out.println("serializing Object count : " + dict.size());
         try
         {
             //Saving of object in a file
-            FileOutputStream file = new FileOutputStream("/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedLemma");
+            FileOutputStream file = new FileOutputStream(filename);
             ObjectOutputStream out = new ObjectOutputStream(file);
 
             // Method for serialization of object
@@ -185,13 +190,13 @@ public class Indexing {
         }
     }
 
-    public static void deSerializationOfDictionary() {
+    public static void deSerializationOfDictionary(String filename) {
         Map<String, TermPosting> dictionary = null;
         // Deserialization
         try
         {
             // Reading the object from a file
-            FileInputStream file = new FileInputStream("/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedLemma");
+            FileInputStream file = new FileInputStream(filename);
             ObjectInputStream in = new ObjectInputStream(file);
 
             // Method for deserialization of object
@@ -212,9 +217,32 @@ public class Indexing {
         }
 
 //        for (String key : dictionary.keySet()) {
-//            System.out.println(dictionary.get(key));
+//            System.out.println(key + " " + dictionary.get(key));
 //        }
         System.out.println("deserialized object count : " + dictionary.size());
+    }
+
+    public static void serializationOfCompressedDictionary(Map<String, BlockedCompressionObject> dict, String filename) {
+        // Serialization
+        System.out.println("serializing Object count : " + dict.size());
+        try
+        {
+            //Saving of object in a file
+            FileOutputStream file = new FileOutputStream(filename);
+            ObjectOutputStream out = new ObjectOutputStream(file);
+
+            // Method for serialization of object
+            out.writeObject(dict);
+            out.close();
+            file.close();
+            System.out.println("Object has been serialized");
+
+        }
+
+        catch(IOException ex)
+        {
+            System.out.println("IOException is caught");
+        }
     }
 
     public static void main(String args[]) throws Exception{
@@ -233,21 +261,48 @@ public class Indexing {
         long end = System.currentTimeMillis();
         System.out.println("time taken :" + (end - start));
 
+        String lemmaFileName = "/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedLemma";
+        String stemmaFileName = "/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedUnCompressedStemma";
         start = System.currentTimeMillis();
         //Serialize and write to file
-        serializationOfDictionary(dictionaryStemma);
+        serializationOfDictionary(dictionaryLemma, lemmaFileName);
         end = System.currentTimeMillis();
         System.out.println("time taken to serialize :" + (end - start));
 
+//        start = System.currentTimeMillis();
+//        //deserialize and read from file and reconstruct
+//        System.out.println("Printing Result ");
+//        deSerializationOfDictionary(lemmaFileName);
+//        end = System.currentTimeMillis();
+//        System.out.println("time taken to deserialize :" + (end - start));
+
         start = System.currentTimeMillis();
-        //deserialize and read from file and reconstruct
-        System.out.println("Printing Result ");
-        deSerializationOfDictionary();
+        //Serialize and write to file
+        serializationOfDictionary(dictionaryStemma, stemmaFileName);
         end = System.currentTimeMillis();
-        System.out.println("time taken to deserialize :" + (end - start));
+        System.out.println("time taken to serialize :" + (end - start));
+
+//        start = System.currentTimeMillis();
+//        //deserialize and read from file and reconstruct
+//        System.out.println("Printing Result ");
+//        deSerializationOfDictionary(stemmaFileName);
+//        end = System.currentTimeMillis();
+//        System.out.println("time taken to deserialize :" + (end - start));
 
         //Compression
         //lemma blocked compression where k = 8 for dictionary and posting list gamma coding
+        String lemmaCompressedFileName = "/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedCompressedLemma";
+        String stemmaCompressedFileName = "/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/SerializedCompressedStemma";
+        BlockedCompression bc = new BlockedCompression();
+        Map<String, BlockedCompressionObject> blockCompressedDict = bc.blockCompression(lemmaDict, lemmaTFDict, docLemmaPosting);
+//        Map<String, List<BlockedCompressionObject>> blockCompressedData = bc.compressedIndex(blockCompressedDict);
+//        System.out.println("block compressed data " + blockCompressedData.size());
+        serializationOfCompressedDictionary(blockCompressedDict, lemmaCompressedFileName);
+
+//        blockCompressedData = bc.compressedIndex(dictionaryStemma);
+//        System.out.println("block compressed data " + blockCompressedData.size());
+//        serializationOfCompressedDictionary(blockCompressedData, stemmaCompressedFileName);
+
 
         //Compression
         //stemma front coding for dictionary and posting list delta coding

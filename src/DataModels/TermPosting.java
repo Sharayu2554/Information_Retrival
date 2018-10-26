@@ -5,28 +5,22 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TermPosting implements Serializable {
-    String term;
     int df; //number of documents this term occurred
     int tf; //number of times that term occur in eachof the document
     List<DocumentPosting> postingList; //list of documents containing the term
 
-    public TermPosting(String term, int df, int tf) {
-        this.term = term;
+    public TermPosting(int df, int tf) {
         this.df = df;
         this.tf = tf;
         this.postingList = new LinkedList<>();
     }
 
-    public TermPosting(String term, int df, int tf, List<DocumentPosting> postingList) {
-        this.term = term;
+    public TermPosting(int df, int tf, List<DocumentPosting> postingList) {
         this.df = df;
         this.tf = tf;
         this.postingList = postingList;
     }
 
-    public String getTerm() {
-        return term;
-    }
 
     public int getDf() {
         return df;
@@ -38,10 +32,6 @@ public class TermPosting implements Serializable {
 
     public List<DocumentPosting> getPostingList() {
         return postingList;
-    }
-
-    public void setTerm(String term) {
-        this.term = term;
     }
 
     public void setDf(int df) {
@@ -82,8 +72,7 @@ public class TermPosting implements Serializable {
 
     @Override
     public String toString() {
-        return "term : '" + term + '\'' +
-                ", df : " + df +
+        return "df : " + df +
                 ", tf : " + tf +
                 ", postingList : " + postingList;
     }
