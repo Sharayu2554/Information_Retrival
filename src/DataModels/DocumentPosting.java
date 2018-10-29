@@ -3,7 +3,7 @@ package DataModels;
 import java.io.Serializable;
 
 public class DocumentPosting implements Serializable {
-    int docId;
+    int docId; //docId
     int maxTf; //frequencey of most frequent term or stem in that document
     int docLen; //total number of word occurrences in that document
 

@@ -1,4 +1,4 @@
-import Compressions.Codes;
+import IRUtilies.Codes;
 import Constants.FileNames;
 import DataModels.*;
 import IRUtilies.ByteOperations;
@@ -16,8 +16,13 @@ import java.util.regex.Pattern;
 
 public class Indexing {
 
+    //regex to file all the tags <__TAG__> in file
     private static final String PATTERN = "<.*>";
+
+    //regex to file all the numbers in files
     private static final String NUMBER_PATTERN = "\\d+";
+
+    //regex to get docId from file
     private static final Pattern DOCID_PATTERN = Pattern.compile("<DOCNO>(.*)</DOCNO>");
 
     private static final HashSet<String> stopWords = new HashSet<>();
@@ -27,8 +32,8 @@ public class Indexing {
     private static Map<String, TreeSet<Integer>> stemmaDict = new TreeMap<>();
     private static Map<String, TermDFTF> lemmaTFDict = new TreeMap<>();
     private static Map<String, TermDFTF> stemmaTFDict = new TreeMap<>();
-    private static Map<Integer, DocumentPosting> docLemmaPosting = new HashMap<>();
-    private static Map<Integer, DocumentPosting> docStemmaPosting = new HashMap<>();
+    private static Map<Integer, DocumentPosting> docLemmaPosting = new TreeMap<>();
+    private static Map<Integer, DocumentPosting> docStemmaPosting = new TreeMap<>();
     private static NLP nlp = new NLP();
 
     public static void printTFDictionary(Map<String, TermDFTF> doc) {
@@ -54,6 +59,7 @@ public class Indexing {
             if (maxTf < dict.get(key)) {
                 maxTf = dict.get(key);
             }
+
             TreeSet<Integer> getValue = postingDict.getOrDefault(key, new TreeSet<>());
             getValue.add(docId);
             postingDict.put(key, getValue);
@@ -64,6 +70,20 @@ public class Indexing {
         docPosting.put(docId, new DocumentPosting(docId, maxTf, docLen));
     }
 
+    /**
+     * for each line
+     * tokenize the line
+     * apply pos tagger to the array
+     * Remove unwanted tags
+     * lemmatize those words
+     * remove punctuations
+     * remove stop words
+     * create dictionary
+     * add to posting list
+     * sort the dict
+     * @param data (text in  file)
+     * @param docId
+     */
     public static void getLemmaStemmaForDoc(String data, Integer docId) {
 
         //set properties to get tokens, split, pos tags and get its lemmas
@@ -85,17 +105,8 @@ public class Indexing {
     /**
      * Read file
      * Read each line
-     * for each line
-     * tokenize the line
-     * apply pos tagger to the array
-     * Remove unwanted tags
-     * lemmatize those words
-     * remove punctuations
-     * remove stop words
-     * create dictionary
-     * add to posting list
-     * sort the dict
-     * @param fileName
+     * Apply regex to remove new lines, get docId, replace tags with empty, remove all numbers from text
+     * @param fileName (path to file name as paramater)
      * @throws Exception
      */
     //TODO: Remove numerical Data
@@ -113,6 +124,12 @@ public class Indexing {
         getLemmaStemmaForDoc(xml, docId);
     }
 
+    /**
+     * for every file in data directory, it calls getTextFromFile function with path to file name as paramater
+     * @param folder (file pointer to data directory)
+     * @param folderName (path to directory in string format)
+     * @throws Exception
+     */
     public static void processFilesFromFolder(File folder, String folderName) throws Exception {
         for (final File fileEntry : folder.listFiles()) {
             getTextFromFile(folderName + fileEntry.getName());
@@ -754,19 +771,19 @@ public class Indexing {
 
     public static void main(String args[]) throws Exception{
 
-        String pathToOutDir = "/home/sharayu/SEM3/Information Retrival/HOMEWORK/HW2/OutPut/";
-        if (args.length < 2) {
+
+        if (args.length < 3) {
             System.out.println("Incorrect Parameters ");
             System.exit(-1);
         }
 
+        String pathToOutDir = args[2];
         loadStopWords(args[1]);
         loadPunctuations();
 
         long start = System.currentTimeMillis();
         processFilesFromFolder(new File(args[0]), args[0] + '/');
-        long end = System.currentTimeMillis();
-        System.out.println("time taken :" + (end - start));
+
 
         //write to file lemma uncompressed
         System.out.println("\nLemma ");
@@ -785,6 +802,9 @@ public class Indexing {
         //stemma front coding for dictionary and posting list delta coding
         System.out.println("\nStemma Front Coding and Compressed");
         writeStemmaCompressed(pathToOutDir);
+
+        long end = System.currentTimeMillis();
+        System.out.println("time taken to finish everything (ms):" + (end - start) + "ms");
 
     }
 }

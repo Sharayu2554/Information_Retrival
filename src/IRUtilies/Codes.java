@@ -1,4 +1,4 @@
-package Compressions;
+package IRUtilies;
 
 import IRUtilies.ByteOperations;
 

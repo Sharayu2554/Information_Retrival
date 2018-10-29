@@ -1,12 +1,10 @@
-package TestNLPPackage;
+package Test;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.BitSet;
 
 import IRUtilies.ByteOperations;
-import com.sun.org.apache.bcel.internal.classfile.Code;
 
 public class TestFileIO {
 
