@@ -1,6 +1,6 @@
 package Compressions;
 
-import java.math.BigInteger;
+import IRUtilies.ByteOperations;
 
 public class Codes {
 
@@ -24,36 +24,36 @@ public class Codes {
     }
 
     public static byte[] gammaCode(int number) {
-        byte[] data = new BigInteger(gammaCodeString(number), 2).toByteArray();
-        System.out.println(" byte length for number " + number + " is " + data.length );
-        return data;
+        byte[] array = ByteOperations.StringCodesToByte(gammaCodeString(number));
+        return array;
     }
 
     public static String deltaCodeString(int number) {
         String binary = Integer.toBinaryString(number);
         String gammaOfOffset = gammaCodeString(binary.length());
-//        System.out.println(gammaOfOffset + binary.substring(1, binary.length()));
         return gammaOfOffset + binary.substring(1, binary.length());
     }
 
-    public static byte[] deltaCode(int number) {
-        return new BigInteger(deltaCodeString(number), 2).toByteArray();
+    public static byte[] deltaCode(int number)
+    {
+        byte array[] = ByteOperations.StringCodesToByte(deltaCodeString(number));
+        return array;
     }
 
     public static void main(String[] args)
     {
-
         System.out.println("Hello World!");
-        System.out.println("Gamma COde " + gammaCode(12345678));
 
-        System.out.println(" Gamma Code of 2: " + gammaCode(2));
-        System.out.println(" Gamma Code of 9 : " + gammaCode(9));
-        System.out.println(" Gamma Code of 13: " + gammaCode(13));
-        System.out.println(" Gamma Code of 19080: " + gammaCode(1400));
+        System.out.println(" Gamma Code of 1 : " + ByteOperations.ByteToStringCodes(gammaCode(1)));
+        System.out.println(" Gamma Code of 2: " + ByteOperations.ByteToStringCodes(gammaCode(2)));
+        System.out.println(" Gamma Code of 9 : " + ByteOperations.ByteToStringCodes(gammaCode(9)));
+        System.out.println(" Gamma Code of 13: " + ByteOperations.ByteToStringCodes(gammaCode(13)));
+        System.out.println(" Gamma Code of 1400: " + ByteOperations.ByteToStringCodes(gammaCode(1400)));
 
-        System.out.println(" Delta code 1 : " + deltaCode(1));
-        System.out.println(" Delta code 2 : " + deltaCode(2));
-        System.out.println(" Delta code 9 : " + deltaCode(9));
-        System.out.println(" Delta code 13 : " + deltaCode(13));
+        System.out.println(" Delta code 1 : " + ByteOperations.ByteToStringCodes(deltaCode(1)));
+        System.out.println(" Delta code 2 : " + ByteOperations.ByteToStringCodes(deltaCode(2)));
+        System.out.println(" Delta code 9 : " + ByteOperations.ByteToStringCodes(deltaCode(9)));
+        System.out.println(" Delta code 13 : " + ByteOperations.ByteToStringCodes(deltaCode(13)));
+
     }
 }

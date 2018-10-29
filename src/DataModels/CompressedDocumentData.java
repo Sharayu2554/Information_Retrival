@@ -31,10 +31,6 @@ public class CompressedDocumentData implements Serializable {
 
     @Override
     public String toString() {
-//        return "{" +
-//                "maxTf=" + Arrays.toString(maxTf) +
-//                ", docLen=" + Arrays.toString(docLen) +
-//                '}';
         return "{" +
                 "maxTf=" + new BigInteger(maxTf) +
                 ", docLen=" + new BigInteger(docLen) +

@@ -1,4 +1,4 @@
-package TestNLPPackage;
+package DataModels;
 
 public class TermDFTF {
     int df; //number of documents this term occurred

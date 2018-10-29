@@ -1,16 +1,15 @@
 package DataModels;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.Arrays;
 
 public class CompressedDocPosting implements Serializable {
     byte[] gap;
-    CompressedDocumentData documentData;
+    int docId;
 
-    public CompressedDocPosting(byte[] gap, CompressedDocumentData documentData) {
+    public CompressedDocPosting(byte[] gap, int docId) {
         this.gap = gap;
-        this.documentData = documentData;
+        this.docId = docId;
     }
 
     public byte[] getGap() {
@@ -21,23 +20,19 @@ public class CompressedDocPosting implements Serializable {
         this.gap = gap;
     }
 
-    public CompressedDocumentData getDocumentData() {
-        return documentData;
+    public int getDocId() {
+        return docId;
     }
 
-    public void setDocumentData(CompressedDocumentData documentData) {
-        this.documentData = documentData;
+    public void setDocId(int docId) {
+        this.docId = docId;
     }
 
     @Override
     public String toString() {
-//        return "{" +
-//                "gap=" + Arrays.toString(gap) +
-//                ", documentData=" + documentData +
-//                '}';
-        return "{" +
-                "gap=" + new BigInteger(gap) +
-                ", documentData=" + documentData +
+        return "CompressedDocPosting{" +
+                "gap=" + Arrays.toString(gap) +
+                ", docId=" + docId +
                 '}';
     }
 }
