@@ -71,16 +71,15 @@ public class Indexing {
     }
 
     /**
-     * for each line
-     * tokenize the line
-     * apply pos tagger to the array
-     * Remove unwanted tags
-     * lemmatize those words
+     * for each file
+     * tokenize the file (Stanford NLP)
+     * apply pos tagger to the array (Stanford NLP)
+     * lemmatize those words (Stanford NLP)
      * remove punctuations
      * remove stop words
      * create dictionary
-     * add to posting list
-     * sort the dict
+     * add to posting list (Tree Set takes care of unique doc Ids and sorted order)
+     * sort the dict (TreeMap takes care of that)
      * @param data (text in  file)
      * @param docId
      */
@@ -226,111 +225,6 @@ public class Indexing {
 
     }
 
-    public static void readLeammaUncompressed(String pathToDir) throws IOException {
-
-        //read docInfo
-        //docInfo (docId, maxtf, docLen)(4 bytes, 4 bytes, 4 bytes)(1400 * 12) = (16.8k)
-        FileInputStream fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION1_DOCINFO);
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        boolean flag = true;
-        int count = 0;
-        Map<Integer, DocumentPosting> docInfo = new HashMap<>();
-        while (bis.available() >= 12) {
-            byte[] bDocId = new byte[4];
-            byte[] bMaxTf = new byte[4];
-            byte[] bdocLen = new byte[4];
-
-            bis.read(bDocId, 0, 4);
-            bis.read(bMaxTf, 0, 4);
-            bis.read(bdocLen, 0, 4);
-
-            int docId = ByteOperations.ByteToInteger(bDocId);
-            int maxTf = ByteOperations.ByteToInteger(bMaxTf);
-            int docLen =  ByteOperations.ByteToInteger(bdocLen);
-            DocumentPosting data = docLemmaPosting.get(docId);
-
-            if (data.getMaxTf() != maxTf || data.getDocLen() != docLen) {
-                flag = false;
-                System.out.println("error in docId " + docId);
-            }
-            docInfo.put(docId, new DocumentPosting(docId, maxTf, docLen));
-            count += 1;
-        }
-        System.out.println("Document count : " + count);
-        bis.close();
-        fis.close();
-
-        fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION1_POSTING_PTR);
-        bis = new BufferedInputStream(fis);
-        count = 0;
-        flag = true;
-        int pos = 0;
-        Map<Integer, Integer> postingPtr = new TreeMap<>();
-        while (bis.available() >= 4) {
-            byte[] docId = new byte[4];
-            bis.read(docId, 0, 4);
-            postingPtr.put(pos, ByteOperations.ByteToInteger(docId));
-            pos += docId.length;
-            count += 1;
-        }
-        System.out.println("Posting pos reached : " + pos);
-        System.out.println("Posting Count reached " + count);
-        bis.close();
-        fis.close();
-
-        fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION1_INDEX);
-        bis = new BufferedInputStream(fis);
-        count = 0;
-        pos = 0;
-        flag =  true;
-        Map<String, TermDFTF> termDFTFMap = new HashMap<>();
-        Map<String, Set<Integer>> postingsList = new HashMap<>();
-        while (bis.available() >= 46) {
-            byte[] bTerm = new byte[34];
-            byte[] bdf = new byte[4];
-            byte[] btf = new byte[4];
-            byte[] bpostingPtr = new byte[4];
-
-            bis.read(bTerm);
-            bis.read(bdf);
-            bis.read(btf);
-            bis.read(bpostingPtr);
-            int docCount = 0;
-            String term = ByteOperations.ByteToString(bTerm);
-            int df = ByteOperations.ByteToInteger(bdf);
-            int tf = ByteOperations.ByteToInteger(btf);
-            int postingPosition = ByteOperations.ByteToInteger(bpostingPtr);
-
-            if (!lemmaDict.containsKey(term)) {
-                System.out.println("Error in index " + term + " not found");
-                flag = false;
-            }
-            TermDFTF meta = lemmaTFDict.get(term);
-            if (df != meta.getDf() || tf != meta.getTf()) {
-                System.out.println(" Error in metadata for term " + term);
-                flag = false;
-            }
-            Set<Integer> data = lemmaDict.get(term);
-            Set<Integer> postSet = new TreeSet<>();
-            for (int  i = postingPosition; i < (df * 4 + postingPosition); i = i + 4) {
-                int docId = postingPtr.get(i);
-                if (!data.contains(docId)) {
-                    System.out.println("erorr in posting list " + docId + " not found ");
-                }
-                postSet.add(docId);
-                docCount += 1;
-            }
-            if (docCount != data.size()) {
-                System.out.println(" Some posting are missing expected : " + data.size() + " found " + docCount );
-            }
-            termDFTFMap.put(term, new TermDFTF(df, tf));
-            postingsList.put(term, postSet);
-            count +=1;
-            pos += 46;
-        }
-        System.out.println("Total Index count " + count);
-    }
-
     public static void writeStemmaUncompressed(String pathToDir) throws IOException {
         //work with dictionaryStemma
         //write to file stemma uncompressed
@@ -403,111 +297,6 @@ public class Indexing {
         bos.close();
         fos.close();
 
-    }
-
-    public static void readSteammaUncompressed(String pathToDir) throws IOException {
-
-        //read docInfo
-        //docInfo (docId, maxtf, docLen)(4 bytes, 4 bytes, 4 bytes)(1400 * 12) = (16.8k)
-        FileInputStream fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION2_DOCINFO);
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        boolean flag = true;
-        int count = 0;
-        Map<Integer, DocumentPosting> docInfo = new HashMap<>();
-        while (bis.available() >= 12) {
-            byte[] bDocId = new byte[4];
-            byte[] bMaxTf = new byte[4];
-            byte[] bdocLen = new byte[4];
-
-            bis.read(bDocId, 0, 4);
-            bis.read(bMaxTf, 0, 4);
-            bis.read(bdocLen, 0, 4);
-
-            int docId = ByteOperations.ByteToInteger(bDocId);
-            int maxTf = ByteOperations.ByteToInteger(bMaxTf);
-            int docLen =  ByteOperations.ByteToInteger(bdocLen);
-            DocumentPosting data = docStemmaPosting.get(docId);
-
-            if (data.getMaxTf() != maxTf || data.getDocLen() != docLen) {
-                flag = false;
-                System.out.println("error in docId " + docId);
-            }
-            docInfo.put(docId, new DocumentPosting(docId, maxTf, docLen));
-            count += 1;
-        }
-        System.out.println("Document count : " + count);
-        bis.close();
-        fis.close();
-
-        fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION2_POSTING_PTR);
-        bis = new BufferedInputStream(fis);
-        count = 0;
-        flag = true;
-        int pos = 0;
-        Map<Integer, Integer> postingPtr = new TreeMap<>();
-        while (bis.available() >= 4) {
-            byte[] docId = new byte[4];
-            bis.read(docId, 0, 4);
-            postingPtr.put(pos, ByteOperations.ByteToInteger(docId));
-            pos += docId.length;
-            count += 1;
-        }
-        System.out.println("Posting pos reached : " + pos);
-        System.out.println("Posting Count reached " + count);
-        bis.close();
-        fis.close();
-
-        fis = new FileInputStream(pathToDir + FileNames.INDEX_UNCOMPRESS_VERSION2_INDEX);
-        bis = new BufferedInputStream(fis);
-        count = 0;
-        pos = 0;
-        flag =  true;
-        Map<String, TermDFTF> termDFTFMap = new HashMap<>();
-        Map<String, Set<Integer>> postingsList = new HashMap<>();
-        while (bis.available() >= 46) {
-            byte[] bTerm = new byte[34];
-            byte[] bdf = new byte[4];
-            byte[] btf = new byte[4];
-            byte[] bpostingPtr = new byte[4];
-
-            bis.read(bTerm);
-            bis.read(bdf);
-            bis.read(btf);
-            bis.read(bpostingPtr);
-            int docCount = 0;
-            String term = ByteOperations.ByteToString(bTerm);
-            int df = ByteOperations.ByteToInteger(bdf);
-            int tf = ByteOperations.ByteToInteger(btf);
-            int postingPosition = ByteOperations.ByteToInteger(bpostingPtr);
-
-            if (!stemmaDict.containsKey(term)) {
-                System.out.println("Error in index " + term + " not found");
-                flag = false;
-            }
-            TermDFTF meta = stemmaTFDict.get(term);
-            if (df != meta.getDf() || tf != meta.getTf()) {
-                System.out.println(" Error in metadata for term " + term);
-                flag = false;
-            }
-            Set<Integer> data = stemmaDict.get(term);
-            Set<Integer> postSet = new TreeSet<>();
-            for (int  i = postingPosition; i < (df * 4 + postingPosition); i = i + 4) {
-                int docId = postingPtr.get(i);
-                if (!data.contains(docId)) {
-                    System.out.println("erorr in posting list " + docId + " not found ");
-                }
-                postSet.add(docId);
-                docCount += 1;
-            }
-            if (docCount != data.size()) {
-                System.out.println(" Some posting are missing expected : " + data.size() + " found " + docCount );
-            }
-            termDFTFMap.put(term, new TermDFTF(df, tf));
-            postingsList.put(term, postSet);
-            count +=1;
-            pos += 46;
-        }
-        System.out.println("Total Index count " + count);
     }
 
     public static void writeLemmaCompressed(String pathToDir) throws IOException {
@@ -783,28 +572,132 @@ public class Indexing {
 
         long start = System.currentTimeMillis();
         processFilesFromFolder(new File(args[0]), args[0] + '/');
-
+        long end = System.currentTimeMillis();
+        System.out.println("\nTime Taken to Process data into dictionary (ms):" + (end - start) + "ms");
 
         //write to file lemma uncompressed
         System.out.println("\nLemma ");
+        start = System.currentTimeMillis();
         writeLemmaUncompressed(pathToOutDir);
+        end = System.currentTimeMillis();
+        System.out.println("time taken to write Index1(Lemma) Uncompressed File (ms):" + (end - start) + "ms");
 
         //write to file stemma uncompressed
         System.out.println("\nStemma ");
+        start = System.currentTimeMillis();
         writeStemmaUncompressed(pathToOutDir);
+        end = System.currentTimeMillis();
+        System.out.println("time taken to write Index2(Stemma) Uncompressed File (ms):" + (end - start) + "ms");
 
         //Compression
         //lemma blocked compression where k = 8 for dictionary and posting list gamma coding
         System.out.println("\nLemma Block Compressed ");
+        start = System.currentTimeMillis();
         writeLemmaCompressed(pathToOutDir);
+        end = System.currentTimeMillis();
+        System.out.println("time taken to write Index1(Lemma) Compressed File (ms):" + (end - start) + "ms");
 
         //Compression
         //stemma front coding for dictionary and posting list delta coding
         System.out.println("\nStemma Front Coding and Compressed");
+        start = System.currentTimeMillis();
         writeStemmaCompressed(pathToOutDir);
+        end = System.currentTimeMillis();
+        System.out.println("time taken to write Index2(Stemma) Compressed File (ms):" + (end - start) + "ms");
 
-        long end = System.currentTimeMillis();
-        System.out.println("time taken to finish everything (ms):" + (end - start) + "ms");
+        System.out.println("\nExtra Point Questions\n");
+        //df, tf, posting list
+        HashSet<String> output = new HashSet<>();
+        output.add("reynold");
+        output.add("nasa");
+        output.add("prandtl");
+        output.add("flow");
+        output.add("pressure");
+        output.add("boundary");
+        output.add("shock");
+
+        for (String term : output) {
+            if (lemmaTFDict.containsKey(term)) {
+                System.out.println(term + " " + lemmaTFDict.get(term) + " posting list " + Arrays.toString(lemmaDict.get(term).toArray()));
+            }
+        }
+
+
+        //if NASA, df, tf, posting list
+        //for first three entries in posting list
+        //maxtf, doclen
+
+        if (lemmaTFDict.containsKey("nasa")) {
+            System.out.println("nasa : " + lemmaTFDict.get("nasa") + " posting list " + Arrays.toString(lemmaDict.get("nasa").toArray()));
+            int  i = 0;
+            for (Integer docId: lemmaDict.get("nasa")) {
+                if (i > 3) {
+                    break;
+                }
+                System.out.println("docId " + docId + " : " + docLemmaPosting.get(docId));
+                i++;
+            }
+        }
+
+        //term with largest df index1
+        //term with lowest df index1
+        int maxdf = 0;
+        String maxdfterm = "";
+        int mindf = Integer.MAX_VALUE;
+        String mindfterm = "";
+        for (String term : lemmaTFDict.keySet()) {
+            TermDFTF data = lemmaTFDict.get(term);
+            if (maxdf < data.getDf()) {
+                maxdf = data.getDf();
+                maxdfterm = term;
+            }
+            if (mindf > data.getDf()) {
+                mindf = data.getDf();
+                mindfterm = term;
+            }
+        }
+        System.out.println("\nTerm with largest df in index1 : " + maxdfterm + " max df is " + maxdf);
+        System.out.println("Term with lowest df in index1 : " + mindfterm + " min df is " + mindf);
+
+        //term with largest df index2
+        //term with lowest df index2
+        maxdf = 0;
+        maxdfterm = "";
+        mindf = Integer.MAX_VALUE;
+        mindfterm = "";
+        for (String term : stemmaTFDict.keySet()) {
+            TermDFTF data = stemmaTFDict.get(term);
+            if (maxdf < data.getDf()) {
+                maxdf = data.getDf();
+                maxdfterm = term;
+            }
+            if (mindf > data.getDf()) {
+                mindf = data.getDf();
+                mindfterm = term;
+            }
+        }
+        System.out.println("\nTerm with largest df in index2 : " + maxdfterm + " max df is " + maxdf);
+        System.out.println("Term with lowest df in index2 : " + mindfterm + " min df is " + mindf);
+
+        //doc with largest maxtf
+        //doc with largest doclen
+        int maxtf = 0;
+        int maxtfdoc = 0;
+        int maxdoclendoc = 0;
+        int maxdocLen = 0;
+        for (Integer docId : docLemmaPosting.keySet()) {
+            DocumentPosting data = docLemmaPosting.get(docId);
+            if (maxtf < data.getMaxTf()) {
+                maxtf = data.getMaxTf();
+                maxtfdoc = docId;
+            }
+            if (maxdocLen < data.getDocLen()) {
+                maxdocLen = data.getDocLen();
+                maxdoclendoc = docId;
+            }
+        }
+        System.out.println("\nDoc with largest maxtf in collection : " + maxtfdoc + " docId is " + maxtfdoc);
+        System.out.println("Doc with largest max docLen in collection : " + maxdocLen + " docId is " + maxdoclendoc);
 
     }
 }
