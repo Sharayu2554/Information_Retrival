@@ -6,9 +6,10 @@ program takes three files are input paramter :
 3. Path to Output directory
 
 
+src folder has source code
 Helper Classes :
-
 Package :
+
 
 1. IRUtilies 
 	1. ByteOperations class
