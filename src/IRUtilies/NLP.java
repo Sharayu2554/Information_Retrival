@@ -1,4 +1,4 @@
-package IRUtilies;
+package src.IRUtilies;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;

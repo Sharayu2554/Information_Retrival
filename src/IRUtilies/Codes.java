@@ -1,6 +1,4 @@
-package IRUtilies;
-
-import IRUtilies.ByteOperations;
+package src.IRUtilies;
 
 public class Codes {
 

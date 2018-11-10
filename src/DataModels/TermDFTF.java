@@ -1,8 +1,8 @@
-package DataModels;
+package src.DataModels;
 
 public class TermDFTF {
     int df; //number of documents this term occurred
-    int tf; //number of times that term occur in eachof the document
+    int tf; //number of times that term occur in each  of the document
 
     public TermDFTF(int df, int tf) {
         this.df = df;

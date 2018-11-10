@@ -1,4 +1,4 @@
-package IRUtilies;
+package src.IRUtilies;
 
 /* author:   Fotis Lazarinis (actually I translated from C to Java)
    date:     June 1997
@@ -10,9 +10,6 @@ package IRUtilies;
 
 */
 
-
-
-import java.io.*;
 
 class NewString {
     public String str;

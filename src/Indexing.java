@@ -1,9 +1,12 @@
-import IRUtilies.Codes;
-import Constants.FileNames;
-import DataModels.*;
-import IRUtilies.ByteOperations;
-import IRUtilies.LCP;
-import IRUtilies.NLP;
+package src;
+import src.DataModels.DocumentPosting;
+import src.DataModels.PostingDoc;
+import src.DataModels.TermDFTF;
+import src.IRUtilies.Codes;
+import src.Constants.FileNames;
+import src.IRUtilies.ByteOperations;
+import src.IRUtilies.NLP;
+import src.IRUtilies.LCP;
 import edu.stanford.nlp.ling.CoreLabel;
 
 import java.io.*;
@@ -24,17 +27,99 @@ public class Indexing {
 
     //regex to get docId from file
     private static final Pattern DOCID_PATTERN = Pattern.compile("<DOCNO>(.*)</DOCNO>");
+    private static final Pattern DOC_TITLE_PATTERN = Pattern.compile("<TITLE>(.*)</TITLE>");
 
     private static final HashSet<String> stopWords = new HashSet<>();
     private static final HashSet<String> punctuations = new HashSet<>();
 
-    private static Map<String, TreeSet<Integer>> lemmaDict = new TreeMap<>();
-    private static Map<String, TreeSet<Integer>> stemmaDict = new TreeMap<>();
+    private static Comparator<PostingDoc> PostingComparator = Comparator.comparing(o -> o.getDocId());
+    private static Map<String, TreeSet<PostingDoc>> lemmaDict = new TreeMap<>();
     private static Map<String, TermDFTF> lemmaTFDict = new TreeMap<>();
-    private static Map<String, TermDFTF> stemmaTFDict = new TreeMap<>();
     private static Map<Integer, DocumentPosting> docLemmaPosting = new TreeMap<>();
+
+    private static Map<Integer, TreeMap<String, Double>> docLemmaData = new HashMap<>();
+    private static Map<Integer, String> docHeadLines = new HashMap<>();
+
+    private static Map<String, TreeSet<PostingDoc>> stemmaDict = new TreeMap<>();
+    private static Map<String, TermDFTF> stemmaTFDict = new TreeMap<>();
     private static Map<Integer, DocumentPosting> docStemmaPosting = new TreeMap<>();
+
+    private static long collectionSize = 0;
+    private static long sumOfDocLens = 0;
+
     private static NLP nlp = new NLP();
+
+    public static NLP getNlp() {
+        return nlp;
+    }
+
+    public static void setNlp(NLP nlp) {
+        Indexing.nlp = nlp;
+    }
+
+    public static HashSet<String> getStopWords() {
+        return stopWords;
+    }
+
+    public static HashSet<String> getPunctuations() {
+        return punctuations;
+    }
+
+    public static Map<String, TreeSet<PostingDoc>> getLemmaDict() {
+        return lemmaDict;
+    }
+
+    public static void setLemmaDict(Map<String, TreeSet<PostingDoc>> lemmaDict) {
+        Indexing.lemmaDict = lemmaDict;
+    }
+
+    public static Map<String, TermDFTF> getLemmaTFDict() {
+        return lemmaTFDict;
+    }
+
+    public static void setLemmaTFDict(Map<String, TermDFTF> lemmaTFDict) {
+        Indexing.lemmaTFDict = lemmaTFDict;
+    }
+
+    public static Map<Integer, DocumentPosting> getDocLemmaPosting() {
+        return docLemmaPosting;
+    }
+
+    public static void setDocLemmaPosting(Map<Integer, DocumentPosting> docLemmaPosting) {
+        Indexing.docLemmaPosting = docLemmaPosting;
+    }
+
+    public static Map<Integer, TreeMap<String, Double>> getDocLemmaData() {
+        return docLemmaData;
+    }
+
+    public static void setDocLemmaData(Map<Integer, TreeMap<String, Double>> docLemmaData) {
+        Indexing.docLemmaData = docLemmaData;
+    }
+
+    public static long getCollectionSize() {
+        return collectionSize;
+    }
+
+    public static void setCollectionSize(long collectionSize) {
+        Indexing.collectionSize = collectionSize;
+    }
+
+    public static long getSumOfDocLens() {
+        return sumOfDocLens;
+    }
+
+    public static void setSumOfDocLens(long sumOfDocLens) {
+        Indexing.sumOfDocLens = sumOfDocLens;
+    }
+
+    public static Map<Integer, String> getDocHeadLines() {
+        return docHeadLines;
+    }
+
+    public static void setDocHeadLines(Map<Integer, String> docHeadLines) {
+        Indexing.docHeadLines = docHeadLines;
+    }
 
     public static void printTFDictionary(Map<String, TermDFTF> doc) {
         System.out.println("Doc Data : " );
@@ -51,7 +136,7 @@ public class Indexing {
     }
 
     public static void updateDictionaries(int docLen, int docId, Map<String, Integer> dict,
-                                   Map<String, TreeSet<Integer>> postingDict,
+                                   Map<String, TreeSet<PostingDoc>> postingDict,
                                    Map<String, TermDFTF> termDFTFDict,
                                    Map<Integer, DocumentPosting> docPosting) {
         int maxTf = 0;
@@ -60,8 +145,8 @@ public class Indexing {
                 maxTf = dict.get(key);
             }
 
-            TreeSet<Integer> getValue = postingDict.getOrDefault(key, new TreeSet<>());
-            getValue.add(docId);
+            TreeSet<PostingDoc> getValue = postingDict.getOrDefault(key, new TreeSet<>(PostingComparator));
+            getValue.add(new PostingDoc(docId, dict.get(key)));
             postingDict.put(key, getValue);
 
             TermDFTF dftf = termDFTFDict.getOrDefault(key, new TermDFTF(0,0));
@@ -89,14 +174,22 @@ public class Indexing {
         nlp.annotateData(data);
         Map<String, Integer> lemmas = new HashMap<>();
         Map<String, Integer> stemmas = new HashMap<>();
+        int count = 0;
         for (CoreLabel token : nlp.getCoreLabels()) {
             String stemm = nlp.getStemma(token.originalText());
             if (!stopWords.contains(stemm) && !punctuations.contains(token.originalText())) {
                 lemmas.put(token.lemma(), lemmas.getOrDefault(token.lemma(), 0) + 1);
                 stemmas.put(stemm, stemmas.getOrDefault(stemm, 0) + 1);
+                count+= 1;
+                TreeMap<String, Double> docData = docLemmaData.getOrDefault(docId, new TreeMap<>());
+                docData.put(token.lemma(), 0.0);
+                docLemmaData.put(docId, docData);
             }
         }
-        int docLen = nlp.getCoreLabels().size();
+
+        int docLen = count;
+        collectionSize += 1;
+        sumOfDocLens += docLen;
         updateDictionaries(docLen, docId, lemmas, lemmaDict,lemmaTFDict, docLemmaPosting);
         updateDictionaries(docLen, docId, stemmas, stemmaDict, stemmaTFDict, docStemmaPosting);
     }
@@ -118,6 +211,14 @@ public class Indexing {
         if (m.find() && !m.group(1).equals("")) {
            docId = Integer.parseInt(m.group(1).replaceAll(" ", ""));
         }
+
+        String headline = "";
+        m = DOC_TITLE_PATTERN.matcher(input);
+        if (m.find() && !m.group(1).equals("")) {
+            headline = m.group(1);
+        }
+        docHeadLines.put(docId, headline);
+
         xml = xml.replaceAll(Indexing.PATTERN, "");
         xml = xml.replaceAll(Indexing.NUMBER_PATTERN, "");
         getLemmaStemmaForDoc(xml, docId);
@@ -186,10 +287,10 @@ public class Indexing {
         pos = 0;
         Map<String, Integer> postingPtr = new HashMap<>();
         for (String term : lemmaDict.keySet()) {
-            Set<Integer> postings = lemmaDict.get(term);
+            Set<PostingDoc> postings = lemmaDict.get(term);
             postingPtr.put(term, pos);
-            for (Integer docId : postings) {
-                byte[] bDocIdPosition = ByteOperations.IntToByte(docPointers.get(docId));
+            for (PostingDoc doc : postings) {
+                byte[] bDocIdPosition = ByteOperations.IntToByte(docPointers.get(doc.getDocId()));
                 bos.write(bDocIdPosition);
                 pos = pos + bDocIdPosition.length;
             }
@@ -261,10 +362,10 @@ public class Indexing {
         pos = 0;
         Map<String, Integer> postingPtr = new HashMap<>();
         for (String term : stemmaDict.keySet()) {
-            Set<Integer> postings = stemmaDict.get(term);
+            Set<PostingDoc> postings = stemmaDict.get(term);
             postingPtr.put(term, pos);
-            for (Integer docId : postings) {
-                byte[] bDocIdPosition = ByteOperations.IntToByte(docPointers.get(docId));
+            for (PostingDoc doc : postings) {
+                byte[] bDocIdPosition = ByteOperations.IntToByte(docPointers.get(doc.getDocId()));
                 bos.write(bDocIdPosition);
                 pos = pos + bDocIdPosition.length;
             }
@@ -337,23 +438,23 @@ public class Indexing {
         System.out.println("Total Number of Terms : " + lemmaDict.size());
         for (String term : lemmaDict.keySet()) {
             postingPtr.put(term, pos);
-            Set<Integer> postings = lemmaDict.get(term);
+            Set<PostingDoc> postings = lemmaDict.get(term);
             boolean flag = true;
             int prev = 0;
-            for (Integer docId : postings) {
+            for (PostingDoc doc : postings) {
                 if (flag) {
-                    prev = docId;
+                    prev = doc.getDocId();
 
-                    byte[] bDocId = Codes.gammaCode(docId);
+                    byte[] bDocId = Codes.gammaCode(doc.getDocId());
                     bos.write(bDocId);
                     pos = pos + bDocId.length;
                     flag = false;
                     continue;
                 }
-                byte[] bDocId = Codes.gammaCode(docId - prev);
+                byte[] bDocId = Codes.gammaCode(doc.getDocId() - prev);
                 bos.write(bDocId);
                 pos = pos + bDocId.length;
-                prev = docId;
+                prev = doc.getDocId();
             }
             posCount += 1;
         }
@@ -452,23 +553,23 @@ public class Indexing {
         System.out.println("Total Number of Terms : " + stemmaDict.size());
         for (String term : stemmaDict.keySet()) {
             postingPtr.put(term, pos);
-            Set<Integer> postings = stemmaDict.get(term);
+            Set<PostingDoc> postings = stemmaDict.get(term);
             boolean flag = true;
             int prev = 0;
-            for (Integer docId : postings) {
+            for (PostingDoc doc : postings) {
                 if (flag) {
-                    prev = docId;
+                    prev = doc.getDocId();
 
-                    byte[] bDocId = Codes.deltaCode(docId);
+                    byte[] bDocId = Codes.deltaCode(doc.getDocId());
                     bos.write(bDocId);
                     pos = pos + bDocId.length;
                     flag = false;
                     continue;
                 }
-                byte[] bDocId = Codes.deltaCode(docId - prev);
+                byte[] bDocId = Codes.deltaCode(doc.getDocId() - prev);
                 bos.write(bDocId);
                 pos = pos + bDocId.length;
-                prev = docId;
+                prev = doc.getDocId();
             }
             posCount += 1;
         }
@@ -558,6 +659,12 @@ public class Indexing {
         return pos;
     }
 
+    public static void runIndexing(String inputDirectory, String stopWordsFilepath) throws Exception{
+        loadStopWords(stopWordsFilepath);
+        loadPunctuations();
+        processFilesFromFolder(new File(inputDirectory), inputDirectory + '/');
+    }
+
     public static void main(String args[]) throws Exception{
 
 
@@ -567,13 +674,15 @@ public class Indexing {
         }
 
         String pathToOutDir = args[2];
-        loadStopWords(args[1]);
-        loadPunctuations();
-
+//        loadStopWords(args[1]);
+//        loadPunctuations();
+//
         long start = System.currentTimeMillis();
-        processFilesFromFolder(new File(args[0]), args[0] + '/');
+//        processFilesFromFolder(new File(args[0]), args[0] + '/');
         long end = System.currentTimeMillis();
-        System.out.println("\nTime Taken to Process data into dictionary (ms):" + (end - start) + "ms");
+//        System.out.println("\nTime Taken to Process data into dictionary (ms):" + (end - start) + "ms");
+
+        runIndexing(args[0], args[1]);
 
         //write to file lemma uncompressed
         System.out.println("\nLemma ");
@@ -630,11 +739,11 @@ public class Indexing {
         if (lemmaTFDict.containsKey("nasa")) {
             System.out.println("nasa : " + lemmaTFDict.get("nasa") + " posting list " + Arrays.toString(lemmaDict.get("nasa").toArray()));
             int  i = 0;
-            for (Integer docId: lemmaDict.get("nasa")) {
+            for (PostingDoc doc: lemmaDict.get("nasa")) {
                 if (i > 3) {
                     break;
                 }
-                System.out.println("docId " + docId + " : " + docLemmaPosting.get(docId));
+                System.out.println("docId " + doc.getDocId() + " : " + docLemmaPosting.get(doc.getDocId()));
                 i++;
             }
         }

@@ -4,16 +4,17 @@ program takes three files are input paramter :
 1. Path to Data Directory
 2. Path to stopWords file
 3. Path to Output directory
+4. Path to Queries Input file
 
+The code of this assignment is extension of previous assignment.
 
 src folder has source code
 Helper Classes :
 Package :
 
-
-1. IRUtilies 
+1. IRUtilies
 	1. ByteOperations class
-	//Fixed Width Data Type to Byte Conversions using ByteBuffer	
+	//Fixed Width Data Type to Byte Conversions using ByteBuffer
 	//Variable Length Data to Byte Conversion String --> BitSet --> byte[]
 
 	2. LCP class
@@ -30,68 +31,31 @@ Package :
 
 2. Data Models
 	1. DocumentPosting
-	{ 
+	{
 		docId,  //docId
 		maxtf,  //frequencey of most frequent term or stem in that document
 		docLen  //total number of word occurrences in that document
 	}
- 		
-	2. TerDfTf 
+
+	2. TermDfTf
 	{
 		df,  //number of documents this term occurred
-		tf   //total of all the number of times that term occur in eachof the document	
+		tf   //total of all the number of times that term occur in eachof the document
+	}
+	3. PostingDoc
+	{
+		docId,
+		tf, //term frequency of particular term in given doc Id
+		wt  //wt calcuated for that term in that document
 	}
 
-3. Constanst
+3. Constanst  (needed for previous assignment)
 	1. FileNames Enums : Contains file names to different types of index versions
-	
-	    //Storing lemma in uncompressed format
-	    //DocInfo file : (DocId, maxtf, docLength ) (4 bytes, 4 bytes, 4 bytes) (12 bytes for each doc * 1400 doc )(16.8k)
-	    //posting ptr : (docId, docId, docId) (4 bytes for each docId)
-	    //Index : (lemma of term , df, tf, posting pointer) fixed width(34 bytes, 4 bytes, 4 bytes, 4 bytes) (42 bytes for each term)
-	    INDEX_UNCOMPRESS_VERSION1_DOCINFO,
-	    INDEX_UNCOMPRESS_VERSION1_POSTING_PTR,
-	    INDEX_UNCOMPRESS_VERSION1_INDEX,
 
 
-	    //stemma
-	    //DocInfo file : (DocId, maxtf, docLength ) (4 bytes, 4 bytes, 4 bytes) (12 bytes for each doc * 1400 doc )(16.8k)
-	    //posting ptr : (docId, docId, docId) (4 bytes for each docId)
-	    //Index : (stemma of term , df, tf, posting pointer) fixed width(34 bytes, 4 bytes, 4 bytes, 4 bytes) (42 bytes for each term)
-	    INDEX_UNCOMPRESS_VERSION2_DOCINFO,
-	    INDEX_UNCOMPRESS_VERSION2_POSTING_PTR,
-	    INDEX_UNCOMPRESS_VERSION2_INDEX,
+Indexing Class : (Used in previous assignment )
 
-
-	    //lemma block compression
-	    //DocInfo file : (DocId, maxtf, docLength ) (4 bytes, 4 bytes, 4 bytes) (12 bytes for each doc * 1400 doc )(16.8k)
-	    //Posting_ptr : variable length encoding (gammaCode for docId, gammacode for gap, gammaCode for gap) (variable length bytes)
-	    //Term : Block Compressed where k = 8 (1 byte for length , len bytes for term, 1 byte for length, length bytes for term , ..)
-	    //Index :  k = 8 (Term ptr, ((df, tf, posting ptr) (repeated 8 times)), 8th Term ptr, ((df, tf, posting ptr) (repeated 8 times)))
-	    //(4 bytes, (4 bytes, 4 bytes, 4 bytes) * 8) for one block of k = 8 (100 bytes for on block)
-	    INDEX_COMPRESS_VERSION1_DOCINFO,
-	    INDEX_COMPRESS_VERSION1_POSTING_PTR,
-	    INDEX_COMPRESS_VERSION1_TERM,
-	    INDEX_COMPRESS_VERSION1_INDEX,
-
-
-	    //stemma front coding
-	    //DocInfo file : (DocId, maxtf, docLength ) (4 bytes, 4 bytes, 4 bytes) (12 bytes for each doc * 1400 doc )(16.8k)
-	    //Posting_ptr : variable length encoding (delta code for docId, delta code for gap, delta code for gap, ...)
-	    //Term : Front Coding with k = 8,
-	    //(1 byte for length, longest common prefix for next 8 terms, *, rest of first term, 1 byte for length, #, next term without prefix, ...)
-	    //[ae, aerodynamic, aeroplane, ae00 ] = for k = 3 [ 2ae*9#rodynamic7#roplane][..]
-	    //Index : k = 8 (Term ptr, ((df, tf, posting ptr) (repeated 8 times)), 8th Term ptr, ((df, tf, posting ptr) (repeated 8 times)))
-	    //(4 bytes, (4 bytes, 4 bytes, 4 bytes) * 8) for one block of k = 8 (100 bytes for on block)
-	    INDEX_COMPRESS_VERSION2_DOCINFO,
-	    INDEX_COMPRESS_VERSION2_POSTING_PTR,
-	    INDEX_COMPRESS_VERSION2_TERM,
-	    INDEX_COMPRESS_VERSION2_INDEX
-
-4. Test
-	//internal purposes
-
-MainCode in Indexing Class :  
+MainCode in Indexing Class :
 
 In the beginning Program loads :
 1. all the stop words in hashset
@@ -107,10 +71,10 @@ In the beginning Program loads :
 	5. Call getLemmaStemmaForDoc Function with file text as one param and docId as second param
 5. For each file getLemmaStemmaForDoc (data : text of file, docId)
 	1. call function annoate from NLP class to tokenize parsed file and get its lemma
-	2. For every token for the given document I add it to TreeMap(lemma, 1 + previous count default zero) an TreeMap(stemma, 1 + previous count default zero) if the given token is not stop word 
+	2. For every token for the given document I add it to TreeMap(lemma, 1 + previous count default zero) an TreeMap(stemma, 1 + previous count default zero) if the given token is not stop word
 	3. Once a dictionary of term and its frequency count for given document is created, I add them to global dictionary by calling UpdateDictionaries
 4. UpdateDictionaries function for each document, takes the lemma and stemma frequency coutn map and add its to global dictionary (SPIMI)
-	1. It calculates the maxTf occurred in that document 
+	1. It calculates the maxTf occurred in that document
 	2. Adds all the lemmas and stemma occured in that document to global dictionary and update their term frequency
 	3. Also for given term, it gets the old posting list from the global TreeMap(term , TreeSet(docIds)) where TreeSet(docIds) is the posting list and add
 	   current docId in that list and update the map.
@@ -144,7 +108,73 @@ In the beginning Program loads :
 10. Call writeStemmaCompressed ( path to directory )
 	1. All the file except term file will be same
 	2. while wiritng term in this version in term file, we do front coding with block k = 8.
-	3. using function defined in LCP class called longest common prefix, we get longest common prefix among every 8 terms block 
+	3. using function defined in LCP class called longest common prefix, we get longest common prefix among every 8 terms block
 	4. (1 byte for length, longest common prefix for next 8 terms, *, rest of first term, 1 byte for length, #, next term without prefix, ...)
 	5. so the term file looks like if it was k = 3 for given terms [ae, aerodynamic, aeroplane, ae00 ] =  [ 2ae*9#rodynamic7#roplane][..]
+
+
+
+
+
+
+Retrival Class : (Used in this assignment)
+
+program takes three files are input paramter :
+1. Path to Data Directory
+2. Path to stopWords file
+3. Path to Output directory
+4. Path to Queries Input file
+
+0. Modified Indexing class to store headlines of the document
+   Modified Indexing class to store map<docId, sortedmap<tokens, wt>>
+   this map is used in retrival score calculation. 
+
+1. class Indexing class static method to create the index on which query is compared.
+2. Two functions calculateW1ForIndex and calculateW2ForIndex are two functions which are called, which calculate normalizedWt using give wt functions for all the documents.
+	calculateW1ForIndex {
+		for each token in invertedIndex:
+			fetch posting list for that token:
+			for each (document, tf) in posting list of the given term:
+				wt = weight is calcuted using given wt functions.
+				map[docId] = map[docId] + wt * wt //this is later used to get normalized value by taking square root for particcular document
+				
+	}
+3. For ech query
+	call processQuery To Get Vector Representation function. //this function calculate score of this query with all the documents
+4. processQueryToGetVectorRepresentation function (query, normalizedWt1, writer to write to output file  of the query)
+	Like tokenizing doc, same function used to tokenize query, remove stop words, manage punctuation get lemma and calcuate tf of each term in the query.
+	once dictionary of query is created
+	for each token in the query:
+		wt = getWt(calcuted wt for specific wt function)
+		termQueryQt is map(token in query, wt)
+		sum of Square = sum of square + wt * wt
+	//summ of square is used for normalizzation
+	sqrtQ = square root of (sum of squares of wt of all tokens in query) //to get normalized value
+
+	
+	for each toke in query:
+		wt = termQueryQ.get(token)
+		normalize_query = wt/ sqrtQ
+		fetch posting list for the token
+		for each doc in posting list:
+			normalize_doc = doc.wt / normalizedWt1[docId]			
+			finalScore[docId] = finalScore[docId] + normalize_query * normalize_doc;
+
+
+	//final score all the documents are calculated in finalScore[] for a given query
+	//these final scores are sorted in descednign order of their values and top 5 documents and their scores are retrived in sorted
+	for each top ranked document in descending order:
+		print Rank, DocID, and Its Score
+		print headline of the document
+		print number of tokens in that document
+		print number of token in merged set of (doc and query)
+		for each token in merged set:
+			updated the value of its score in res[token_index]
+
+		res contians final vector representation of the document and query merged value
+		print vector representation of merged value
+		
+		 
+
+
 

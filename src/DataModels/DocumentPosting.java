@@ -1,4 +1,4 @@
-package DataModels;
+package src.DataModels;
 
 import java.io.Serializable;
 
