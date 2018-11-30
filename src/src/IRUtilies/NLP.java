@@ -1,5 +1,5 @@
 package src.IRUtilies;
-
+import src.IRUtilies.*;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -11,7 +11,7 @@ import java.util.Properties;
 public class NLP {
     private Properties props = new Properties();
     private StanfordCoreNLP pipeline;
-    private Porter porter = new Porter();
+    private src.IRUtilies.Porter porter = new Porter();
     private Annotation annotation;
 
     public NLP() {
