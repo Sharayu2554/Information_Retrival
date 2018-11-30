@@ -1,0 +1,33 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Information_Retrival:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Information_Retrival_jar</output-path>
+    <root id="archive" name="Information_Retrival.jar">
+      <element id="module-output" name="Information_Retrival" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/xom.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jollyday.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/protobuf.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/ejml-0.23.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/joda-time.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/slf4j-api.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/javax.json.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/slf4j-simple.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/ejml-0.23-src.zip" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/xom-1.2.10-src.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-core-2.3.0.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/joda-time-2.9-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jollyday-0.4.9-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/stanford-corenlp-3.9.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-core-2.3.0.1-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/javax.activation-api-1.2.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/javax.json-api-1.0-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-api-2.4.0-b180830.0359.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-impl-2.4.0-b180830.0438.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/stanford-corenlp-3.9.2-models.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/stanford-corenlp-3.9.2-javadoc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/stanford-corenlp-3.9.2-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/javax.activation-api-1.2.0-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-api-2.4.0-b180830.0359-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Resources_InformationRetrival/Data/resourcesIR/stanford-corenlp-full-2018-10-05/jaxb-impl-2.4.0-b180830.0438-sources.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
