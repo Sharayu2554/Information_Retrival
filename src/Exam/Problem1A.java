@@ -96,10 +96,10 @@ public class Problem1A {
         int docLen = count;
         collectionSize += 1;
         sumOfDocLens += docLen;
-        System.out.println("Document " + docId);
-        for (String token: stemmas.keySet()) {
-            System.out.println(" token: " + token + " : " + stemmas.get(token) );
-        }
+//        System.out.println("Document " + docId);
+//        for (String token: stemmas.keySet()) {
+//            System.out.println(" token: " + token + " : " + stemmas.get(token) );
+//        }
         updateDictionaries(docLen, docId, lemmas, globalLemmas);
         updateDictionaries(docLen, docId, stemmas, globalStemmas);
     }
@@ -140,9 +140,15 @@ public class Problem1A {
      */
     public static void kmeans(int k) {
         int[] seeds = new int[k];
+        Set<Integer> seedSet = new HashSet<>();
         Random random  = new Random();
+        int num =  random.nextInt(collectionSize -1);
         for (int i =0; i< k; i++) {
-            seeds[i] = random.nextInt(collectionSize -1);
+            while (seedSet.contains(num)) {
+                num = random.nextInt(collectionSize -1);
+            }
+            seeds[i] = num;
+            seedSet.add(num);
             System.out.print(seeds[i]  + ", ");
         }
 
@@ -189,13 +195,12 @@ public class Problem1A {
         }
         System.out.println();
 
-        TreeMap<String, Integer> vector = vectorStemmaData.get(0);
-        System.out.println("\nVector for doc1: " + vector.size());
-        int i = 0;
-        for (String token: vector.keySet()) {
-            System.out.println(" token: " + token + " : " + vector.get(token) + " : " + vectorArrayStemmaData[0][i++] );
-        }
-
+//        TreeMap<String, Integer> vector = vectorStemmaData.get(0);
+//        System.out.println("\nVector for doc1: " + vector.size());
+//        int i = 0;
+//        for (String token: vector.keySet()) {
+//            System.out.println(" token: " + token + " : " + vector.get(token) + " : " + vectorArrayStemmaData[0][i++] );
+//        }
         kmeans(3);
     }
 }
