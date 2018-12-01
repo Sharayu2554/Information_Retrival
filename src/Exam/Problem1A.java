@@ -63,13 +63,15 @@ public class Problem1A {
 
         //set properties to get tokens, split, pos tags and get its lemmas
         data = data.replaceAll("\n", " ");
+        data = data.replaceAll("\\d","");
         nlp.annotateData(data);
-        Map<String, Integer> lemmas = new HashMap<>();
-        Map<String, Integer> stemmas = new HashMap<>();
+        Map<String, Integer> lemmas = new TreeMap<>();
+        Map<String, Integer> stemmas = new TreeMap<>();
         int count = 0;
         for (CoreLabel token : nlp.getCoreLabels()) {
             String stemm = nlp.getStemma(token.originalText());
             if (!stopWords.contains(stemm) && !punctuations.contains(token.originalText())) {
+
                 lemmas.put(token.lemma(), lemmas.getOrDefault(token.lemma(), 0) + 1);
                 stemmas.put(stemm, stemmas.getOrDefault(stemm, 0) + 1);
                 count+= 1;
@@ -85,12 +87,13 @@ public class Problem1A {
                 docStemmaData.put(docId, docData);
             }
         }
-
         int docLen = count;
         collectionSize += 1;
         sumOfDocLens += docLen;
         System.out.println("Document " + docId);
-        for () {}
+        for (String token: stemmas.keySet()) {
+            System.out.println(" token: " + token + " : " + stemmas.get(token) );
+        }
         updateDictionaries(docLen, docId, lemmas, globalLemmas);
         updateDictionaries(docLen, docId, stemmas, globalStemmas);
     }
