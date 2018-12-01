@@ -23,6 +23,9 @@ public class Problem1A {
     private static Map<String, Integer> globalLemmas = new HashMap<>();
     private static Map<String, Integer> globalStemmas = new HashMap<>();
 
+    private static Map<Integer, TreeMap<String, Integer>> vectorLemmaData = new HashMap<>();
+    private static Map<Integer, TreeMap<String, Integer>> vectorStemmaData = new HashMap<>();
+
     public static void loadStopWords(String stopWordsFile) {
         try {
             stopWords.addAll( Files.readAllLines(Paths.get(stopWordsFile), StandardCharsets.UTF_8));
@@ -70,7 +73,7 @@ public class Problem1A {
         int count = 0;
         for (CoreLabel token : nlp.getCoreLabels()) {
             String stemm = nlp.getStemma(token.originalText());
-            if (!stopWords.contains(stemm) && !punctuations.contains(token.originalText())) {
+            if (!stemm.isEmpty() && !stopWords.contains(stemm) && !punctuations.contains(token.originalText())) {
 
                 lemmas.put(token.lemma(), lemmas.getOrDefault(token.lemma(), 0) + 1);
                 stemmas.put(stemm, stemmas.getOrDefault(stemm, 0) + 1);
@@ -98,11 +101,38 @@ public class Problem1A {
         updateDictionaries(docLen, docId, stemmas, globalStemmas);
     }
 
+    public static void getDocumentVectors() {
+        for (int i = 0; i < collectionSize; i++) {
+            System.out.println("vector model for document : " + i);
+            TreeMap<String, Integer> docData = docStemmaData.get(i);
+            TreeMap<String, Integer> vectorDocData = new TreeMap<String, Integer>();
+            for (String token : globalStemmas.keySet()) {
+                vectorDocData.put(token, docData.getOrDefault(token, 0));
+            }
+            vectorStemmaData.put(i, vectorDocData);
+
+            docData = docLemmaData.get(i);
+            vectorDocData = new TreeMap<String, Integer>();
+            for (String token : globalLemmas.keySet()) {
+                vectorDocData.put(token, docData.getOrDefault(token, 0));
+            }
+            vectorLemmaData.put(i, vectorDocData);
+        }
+    }
+
+    /**
+     * kmeans clustering
+     * @param k
+     */
+    public static void kmeans(int k) {
+//        kfor () {}
+    }
+
     public static void main(String args[]) {
         String[] docs = new String[10];
         loadStopWords(args[0]);
         loadPunctuations();
-        int n = 2;
+        int n = 10;
         docs[0] = "Sipping Chianti in rural Tuscany. Eating pizza on a Rome backstreet. Or exploring\n" +
                 "ancient history at Pompeii.\n";
         docs[1] = "One in eight children and young people between the ages of 5 and 19 in England has a\n" +
@@ -131,6 +161,20 @@ public class Problem1A {
         for (int i = 0; i < n; i++) {
             getStemmaForDoc(docs[i], i);
         }
+        getDocumentVectors();
+
+        System.out.println("\nGlobal Stemma Values : " + globalStemmas.size());
+        for (String token: globalStemmas.keySet()) {
+            System.out.println(" token: " + token + " : " + globalStemmas.get(token) );
+        }
         System.out.println();
+
+        TreeMap<String, Integer> vector = vectorStemmaData.get(0);
+        System.out.println("\nVector for doc1: " + vector.size());
+        for (String token: vector.keySet()) {
+            System.out.println(" token: " + token + " : " + vector.get(token) );
+        }
+
+        kmeans(3);
     }
 }
