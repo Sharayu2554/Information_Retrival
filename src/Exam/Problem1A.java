@@ -18,13 +18,16 @@ public class Problem1A {
     private static final HashSet<String> punctuations = new HashSet<>();
     private static Map<Integer, TreeMap<String, Integer>> docLemmaData = new HashMap<>();
     private static Map<Integer, TreeMap<String, Integer>> docStemmaData = new HashMap<>();
-    private static long collectionSize = 0;
+    private static int collectionSize = 0;
     private static long sumOfDocLens = 0;
-    private static Map<String, Integer> globalLemmas = new HashMap<>();
-    private static Map<String, Integer> globalStemmas = new HashMap<>();
+    private static Map<String, Integer> globalLemmas = new TreeMap<>();
+    private static Map<String, Integer> globalStemmas = new TreeMap<>();
 
     private static Map<Integer, TreeMap<String, Integer>> vectorLemmaData = new HashMap<>();
     private static Map<Integer, TreeMap<String, Integer>> vectorStemmaData = new HashMap<>();
+
+    private static int[][] vectorArrayLemmaData;
+    private static int[][] vectorArrayStemmaData;
 
     public static void loadStopWords(String stopWordsFile) {
         try {
@@ -102,30 +105,47 @@ public class Problem1A {
     }
 
     public static void getDocumentVectors() {
-        for (int i = 0; i < collectionSize; i++) {
-            System.out.println("vector model for document : " + i);
-            TreeMap<String, Integer> docData = docStemmaData.get(i);
+
+        vectorArrayStemmaData = new int[collectionSize][globalStemmas.size()];
+        vectorArrayLemmaData = new int[collectionSize][globalLemmas.size()];
+        for (int docId = 0; docId < collectionSize; docId++) {
+
+            System.out.println("vector model for document : " + docId);
+            int index = 0;
+            TreeMap<String, Integer> docData = docStemmaData.get(docId);
             TreeMap<String, Integer> vectorDocData = new TreeMap<String, Integer>();
             for (String token : globalStemmas.keySet()) {
                 vectorDocData.put(token, docData.getOrDefault(token, 0));
+                vectorArrayStemmaData[docId][index++] = docData.getOrDefault(token, 0);
             }
-            vectorStemmaData.put(i, vectorDocData);
+            vectorStemmaData.put(docId, vectorDocData);
 
-            docData = docLemmaData.get(i);
+
+            index = 0;
+            docData = docLemmaData.get(docId);
             vectorDocData = new TreeMap<String, Integer>();
             for (String token : globalLemmas.keySet()) {
                 vectorDocData.put(token, docData.getOrDefault(token, 0));
+                vectorArrayLemmaData[docId][index++] = docData.getOrDefault(token, 0);
             }
-            vectorLemmaData.put(i, vectorDocData);
+            vectorLemmaData.put(docId, vectorDocData);
         }
     }
+
+
 
     /**
      * kmeans clustering
      * @param k
      */
     public static void kmeans(int k) {
-//        kfor () {}
+        int[] seeds = new int[k];
+        Random random  = new Random();
+        for (int i =0; i< k; i++) {
+            seeds[i] = random.nextInt(collectionSize -1);
+            System.out.print(seeds[i]  + ", ");
+        }
+
     }
 
     public static void main(String args[]) {
@@ -171,8 +191,9 @@ public class Problem1A {
 
         TreeMap<String, Integer> vector = vectorStemmaData.get(0);
         System.out.println("\nVector for doc1: " + vector.size());
+        int i = 0;
         for (String token: vector.keySet()) {
-            System.out.println(" token: " + token + " : " + vector.get(token) );
+            System.out.println(" token: " + token + " : " + vector.get(token) + " : " + vectorArrayStemmaData[0][i++] );
         }
 
         kmeans(3);
