@@ -12,6 +12,10 @@ Pre-Requisite:
 	java -jar ./HW2.jar ./Data/Cranfield ./resourcesIR/stopwords ./OutPut/
 
 	java -jar ./HW2.jar __PATH_TO_CranfieldDataSet__ ./resourcesIR/stopwords ./OutPut/
+	
+	or 
+	
+	java src/Indexing.java __PATH_TO_CranfieldDataSet__ ./resourcesIR/stopwords ./OutPut/
 
 3. Description file containa the alogrithm and description of what output file contains
 
