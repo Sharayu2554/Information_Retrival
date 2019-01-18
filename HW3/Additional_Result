@@ -1,0 +1,43 @@
+3. Identify which documents you think are relevant and non-relevant for each query
+by inspecting the documents:
+Answer :
+
+Query 1.  what similarity laws must be obeyed when constructing aeroelastic models of heated high speed aircraft?
+
+DocId: 573  words : [high, law, must, obey, similarity]
+This document talks about similarity laws in classical hypersonic similitude.
+
+DocId: 51  words : [aircraft, construct, heated, model, speed]
+This document talks about aircraft anf and its heating effect on speed but doesn talk about similarity laws
+
+DocId: 13  words : [heated, law, similarity]
+This documents is very closely relevant to the question since it talks about similarity law of heated wings
+
+DocId: 944  words : [law, obey]
+This document is not very closely relevant since it talk about heating of vehicle, but doesnt talk about similarity law of high speed aircraft.		
+
+DocId: 359  words : [law, similarity]
+This document is not very closely relevant since it talks about laws of similarity but under different constraints. 
+
+
+Q4.Non relevant document occur in top ranked Results since, the common words in query and document have very high frequency in the documents. 
+Foor example, the word similarity has very high frequency id last document and there are only 2 matched among which one of them has very high tf and low df and maxTf.
+
+Q5.
+
+Q6. While readin the inverted index, I calculated the wts of the term in given document since, while reading we knew tf of the word in that doc, df of that doc, total number of doccuments in collection and avgDoclen and summed up the squares of these weights grouping them doc wise. So that at the end of complete read we have the value to calcuated the normalized weights for each document.
+
+Similarity, after parsing and reading the query, we calculated wts and summed their squares to get the normalized wt of each term in the query.
+
+but to Show vector represntation, I had to store which document has which tokens and their wts caculated in Map<DocId, TreeMap<Token, Weight>>
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,180 @@
+
+
+program takes three files are input paramter :
+1. Path to Data Directory
+2. Path to stopWords file
+3. Path to Output directory
+4. Path to Queries Input file
+
+The code of this assignment is extension of previous assignment.
+
+src folder has source code
+Helper Classes :
+Package :
+
+1. IRUtilies
+	1. ByteOperations class
+	//Fixed Width Data Type to Byte Conversions using ByteBuffer
+	//Variable Length Data to Byte Conversion String --> BitSet --> byte[]
+
+	2. LCP class
+	//Class to get longest common prefix
+
+	3. NLP class
+	//has all the Nlp functions it uses Stanford NLP to tokenize, get pos tags and lemmas
+
+	4. Porter
+	//Third party file to get stemmas
+
+	5. Codes
+	//for given numbers get gamma codes and delta codes
+
+2. Data Models
+	1. DocumentPosting
+	{
+		docId,  //docId
+		maxtf,  //frequencey of most frequent term or stem in that document
+		docLen  //total number of word occurrences in that document
+	}
+
+	2. TermDfTf
+	{
+		df,  //number of documents this term occurred
+		tf   //total of all the number of times that term occur in eachof the document
+	}
+	3. PostingDoc
+	{
+		docId,
+		tf, //term frequency of particular term in given doc Id
+		wt  //wt calcuated for that term in that document
+	}
+
+3. Constanst  (needed for previous assignment)
+	1. FileNames Enums : Contains file names to different types of index versions
+
+
+Indexing Class : (Used in previous assignment )
+
+MainCode in Indexing Class :
+
+In the beginning Program loads :
+1. all the stop words in hashset
+2. all the punctuations in hashset
+3. Cals ProcessFilesFromFolder with two parameters
+	1. File pointer to directory and String of path to directory
+	2. for each file in directory it calls getTextFromFile with path to file name as parameter
+4. for each file getTextFromFile which take path to filename in string as parameter
+	1. Reads the file in string
+	2. applies regex to regex to get docId from file
+	3. Apply regex to replace all the tags to ""
+	4. Apply regex to replace all the numbers in string
+	5. Call getLemmaStemmaForDoc Function with file text as one param and docId as second param
+5. For each file getLemmaStemmaForDoc (data : text of file, docId)
+	1. call function annoate from NLP class to tokenize parsed file and get its lemma
+	2. For every token for the given document I add it to TreeMap(lemma, 1 + previous count default zero) an TreeMap(stemma, 1 + previous count default zero) if the given token is not stop word
+	3. Once a dictionary of term and its frequency count for given document is created, I add them to global dictionary by calling UpdateDictionaries
+4. UpdateDictionaries function for each document, takes the lemma and stemma frequency coutn map and add its to global dictionary (SPIMI)
+	1. It calculates the maxTf occurred in that document
+	2. Adds all the lemmas and stemma occured in that document to global dictionary and update their term frequency
+	3. Also for given term, it gets the old posting list from the global TreeMap(term , TreeSet(docIds)) where TreeSet(docIds) is the posting list and add
+	   current docId in that list and update the map.
+	4. It updates all terms global term frequency and document frequency
+5. once all this is done (final Obtained Data)
+	1. lemmaDict : TreeMap(Lemma, TreeSet(docIds)) //containts TreeMap of lemmas with its posting list
+	2. lemmaTfDict : TreeMap (Lemma, TermDFTF) //Contains TreeMap of lemmas with its Meta Data like (term frequency (tf), document frequency(df))
+	3. docLemmaposting : TreeMap (docId, DocumentPosting) //Contains TreeMap of dociIds with its metadata like (maxTf (max lemma frequency in that document), docLen (words in that document))
+	4. stemmaDict : TreeMap(Stemma, TreeSet(docIds)) //containts TreeMap of stemmas with its posting list
+	5. stemmaTfDict : TreeMap (Stemma, TermDFTF) //Contains TreeMap of stemmas with its Meta Data like (term frequency (tf), document frequency(df))
+	6. docStemmaposting : TreeMap (docId, DocumentPosting) //Contains TreeMap of dociIds with its metadata like (maxTf (max stemma frequency in that document), docLen (words in that document))
+6. Since I have Inverted Index, I can now write it into Uncompressed and compressed form
+7. Call writeLemmaUncompressed( path to output directory )
+	1. write docInfo (docId, maxtf, docLen)(4 bytes, 4 bytes, 4 bytes)(1400 * 12) = (16.8k) using the docLemmaPosting object created and Byte Operations to convert data in bytes
+	2. docLemmaPosting has (docId, maxtf, docLen) which is written to Uncompressed docInfo file and file pointers of each docid location are stored in a map called docPointers
+	3. write posting_ptr (4 bytes per document)
+	4. reading lemma dict object created i write posting list to uncompressed posting file and file pointers position of each terms posting list is store in map called postingPtr
+	4. write index (34 bytes for term, 4 bytes for df, 4 bytes for tf, 4 bytes for pointer)( 46 bytes each term)
+	5. uses lemmaTFDict to write terms data (term , df, tf and posting list pointer) in uncompressed index file usign the postingPtr map to get posting ptr of that term
+
+8. Call writeStemmaUncompressed( path to output directory ), does exaclty same as above function  just for stemma dictionary
+9. Call writeLemmaCompressed (path to ouput directory )
+	1. Write docInfo same and previous functions
+	2. For writing posting ptr file, its used gamma codes, for first docid in posting list of current term, it writes docids gammacode and then calculates the gaps of futher docIds
+	3. and writes gammacodes to those gaps, this posting list is obtained from existing stored object lemmaDict
+	4. next is to create trems file and index file simultenously
+	5. Since In this version we are using block compression of k = 8
+	6. Index file contains for k = 8 : (0th Term ptr, ((df, tf, posting ptr) (repeated 8 times)), 8th Term ptr, ((df, tf, posting ptr) (repeated 8 times).. and so on)
+	7. this is achived using iterating over lemmaTFDict which gives lemma metadata like term pointer, df, tf and usign postinPtr map to get posting ptr for that term
+	8. term file will contain Term : Block Compressed where k = 8 (1 byte for length , len bytes for term, 1 byte for length, length bytes for term , ..)
+10. Call writeStemmaCompressed ( path to directory )
+	1. All the file except term file will be same
+	2. while wiritng term in this version in term file, we do front coding with block k = 8.
+	3. using function defined in LCP class called longest common prefix, we get longest common prefix among every 8 terms block
+	4. (1 byte for length, longest common prefix for next 8 terms, *, rest of first term, 1 byte for length, #, next term without prefix, ...)
+	5. so the term file looks like if it was k = 3 for given terms [ae, aerodynamic, aeroplane, ae00 ] =  [ 2ae*9#rodynamic7#roplane][..]
+
+
+
+
+
+
+Retrival Class : (Used in this assignment)
+
+program takes three files are input paramter :
+1. Path to Data Directory
+2. Path to stopWords file
+3. Path to Output directory
+4. Path to Queries Input file
+
+0. Modified Indexing class to store headlines of the document
+   Modified Indexing class to store map<docId, sortedmap<tokens, wt>>
+   this map is used in retrival score calculation. 
+
+1. class Indexing class static method to create the index on which query is compared.
+2. Two functions calculateW1ForIndex and calculateW2ForIndex are two functions which are called, which calculate normalizedWt using give wt functions for all the documents.
+	calculateW1ForIndex {
+		for each token in invertedIndex:
+			fetch posting list for that token:
+			for each (document, tf) in posting list of the given term:
+				wt = weight is calcuted using given wt functions.
+				map[docId] = map[docId] + wt * wt //this is later used to get normalized value by taking square root for particcular document
+				
+	}
+3. For ech query
+	call processQuery To Get Vector Representation function. //this function calculate score of this query with all the documents
+4. processQueryToGetVectorRepresentation function (query, normalizedWt1, writer to write to output file  of the query)
+	Like tokenizing doc, same function used to tokenize query, remove stop words, manage punctuation get lemma and calcuate tf of each term in the query.
+	once dictionary of query is created
+	for each token in the query:
+		wt = getWt(calcuted wt for specific wt function)
+		termQueryQt is map(token in query, wt)
+		sum of Square = sum of square + wt * wt
+	//summ of square is used for normalizzation
+	sqrtQ = square root of (sum of squares of wt of all tokens in query) //to get normalized value
+
+	
+	for each toke in query:
+		wt = termQueryQ.get(token)
+		normalize_query = wt/ sqrtQ
+		fetch posting list for the token
+		for each doc in posting list:
+			normalize_doc = doc.wt / normalizedWt1[docId]			
+			finalScore[docId] = finalScore[docId] + normalize_query * normalize_doc;
+
+
+	//final score all the documents are calculated in finalScore[] for a given query
+	//these final scores are sorted in descednign order of their values and top 5 documents and their scores are retrived in sorted
+	for each top ranked document in descending order:
+		print Rank, DocID, and Its Score
+		print headline of the document
+		print number of tokens in that document
+		print number of token in merged set of (doc and query)
+		for each token in merged set:
+			updated the value of its score in res[token_index]
+
+		res contians final vector representation of the document and query merged value
+		print vector representation of merged value
+		
+		 
+
+
+
